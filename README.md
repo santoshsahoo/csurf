@@ -6,7 +6,7 @@
 [![Test coverage][coveralls-image]][coveralls-url]
 [![Gratipay][gratipay-image]][gratipay-url]
 
-Node.js [CSRF](https://en.wikipedia.org/wiki/Cross-site_request_forgery) protection middleware.
+Fork of the Node.js [CSRF](https://en.wikipedia.org/wiki/Cross-site_request_forgery) protection middleware.
 
 Requires either a session middleware or [cookie-parser](https://www.npmjs.com/package/cookie-parser) to be initialized first.
 
@@ -97,6 +97,11 @@ locations, in order:
   - `req.headers['x-csrf-token']` - the `X-CSRF-Token` HTTP request header.
   - `req.headers['x-xsrf-token']` - the `X-XSRF-Token` HTTP request header.
 
+##### unintrusive
+
+  Determines whether token verification happens automatically or upon calling
+  the `req.verifytoken()` method inside the method. This is false by default to keep backward compatibility with the original middle.
+
 ## Example
 
 ### Simple express example
@@ -112,7 +117,7 @@ var express = require('express')
 
 // setup route middlewares
 var csrfProtection = csrf({ cookie: true })
-var parseForm = bodyParser.urlencoded({ extended: false })
+var parseForm = bodyParser.urlencoded({ extended: false, unintrusive:false })
 
 // create express app
 var app = express()
@@ -129,6 +134,14 @@ app.get('/form', csrfProtection, function(req, res) {
 app.post('/process', parseForm, csrfProtection, function(req, res) {
   res.send('data is being processed')
 })
+
+// When unintrusive is set to true
+app.post('/resetpassword', function(req, res) {
+  req.verifytoken(); // call only when required to validate
+  // do normal work
+}
+```
+
 ```
 
 Inside the view (depending on your template language; handlebars-style
@@ -138,7 +151,7 @@ input field named `_csrf`:
 ```html
 <form action="/process" method="POST">
   <input type="hidden" name="_csrf" value="{{csrfToken}}">
-  
+
   Favorite color: <input type="text" name="favoriteColor">
   <button type="submit">Submit</button>
 </form>

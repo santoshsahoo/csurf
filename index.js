@@ -53,6 +53,8 @@ module.exports = function csurf(options) {
     throw new TypeError('option ignoreMethods must be an array')
   }
 
+  var unintrusive = options.unintrusive === undefined ? true : options.unintrusive;
+
   // generate lookup
   var ignoreMethod = getIgnoredMethods(ignoreMethods)
 
@@ -92,8 +94,12 @@ module.exports = function csurf(options) {
       setsecret(req, res, sessionKey, secret, cookie)
     }
 
+    req.verifytoken = function (donotthrow) {
+      return verifytoken(req, tokens, secret, value(req));
+    }
+
     // verify the incoming token
-    if (!ignoreMethod[req.method]) {
+    if (!unintrusive && !ignoreMethod[req.method]) {
       verifytoken(req, tokens, secret, value(req))
     }
 
